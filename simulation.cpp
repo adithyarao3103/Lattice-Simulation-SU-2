@@ -252,7 +252,7 @@ public:
 
 	}
 
-	void update_lattice()
+	void updateLattice()
 	{
 
 		float r0 = (float)LO + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (HI - LO)));
