@@ -3,12 +3,11 @@
 #include <random>
 
 
-#define nS 8
-#define nT 8
+#define nS 4
+#define nT 4
 #define threshold 0.5
 #define beta 1
 #define N 2
-
 
 class complex {
 public:
@@ -20,28 +19,6 @@ public:
 	complex(float real, float imag) {
 		r = real;
 		i = imag;
-	}
-
-	complex multiply(complex c2) {
-		complex c;
-		c.r = r * c2.r - i * c2.i;
-		c.i = r * c2.i + i * c2.r;
-		return(c);
-	}
-
-	complex add(complex c2) {
-		complex c;
-		c.r = c2.r + r;
-		c.i = c2.i + i;
-		return(c);
-	}
-
-	complex scalarMultiply(float f) {
-		complex out;
-		out.r = r * f;
-		out.i = i * f;
-		return(out);
-
 	}
 
 	complex conjugate() {
@@ -56,10 +33,31 @@ public:
 	}
 };
 
+complex operator*(complex c1, complex c2) {
+		complex c;
+		c.r = c1.r * c2.r - c1.i * c2.i;
+		c.i = c1.r * c2.i + c1.i * c2.r;
+		return(c);
+	}
+
+complex operator+(complex c1, complex c2) {
+		complex c;
+		c.r = c2.r + c1.r;
+		c.i = c2.i + c1.i;
+		return(c);
+	}
+
+complex operator*(float f, complex c) {
+		complex out;
+		out.r = c.r * f;
+		out.i = c.i * f;
+		return(out);
+	}
+
 class su2 {
-private:
-	complex u[2][2];
 public:
+	complex u[2][2];
+
 	su2() {
 		for (int row = 0; row < 2; row++) {
 			for (int col = 0; col < 2; col++) {
@@ -75,64 +73,6 @@ public:
 		}
 	}
 
-	su2 add(su2 u2) {
-		su2 sum;
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < 2; j++) {
-				sum.u[i][j] = u[i][j].add(u2.u[i][j]);
-			}
-		}
-		return (sum);
-	}
-
-	su2 leftMul(su2 u2) {
-		su2 out;
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < 2; j++) {
-				complex sum;
-				for (int k = 0; k < 2; k++) {
-					sum.add(u2.u[i][k].multiply(u[k][j]));
-				}
-				out.u[i][j] = sum;
-			}
-		}
-		return(out);
-	}
-
-	su2 rightMul(su2 u2) {
-		su2 out;
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < 2; j++) {
-				complex sum;
-				for (int k = 0; k < 2; k++) {
-					sum.add(u[i][k].multiply(u2.u[k][j]));
-				}
-				out.u[i][j] = sum;
-			}
-		}
-		return(out);
-	}
-
-	su2 constMul(complex c) {
-		su2 out;
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < 2; j++) {
-				out.u[i][j] = c.multiply(u[i][j]);
-			}
-		}
-		return(out);
-	}
-
-	su2 scalarMul(float f) {
-		su2 out;
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < 2; j++) {
-				out.u[i][j] = u[i][j].scalarMultiply(f);
-			}
-		}
-		return(out);
-	}
-
 	su2 hermitian() {
 		su2 out(*this);
 		out.u[0][1] = u[1][0].conjugate();
@@ -141,7 +81,7 @@ public:
 	}
 
 	complex trace() {
-		return (u[0][0].add(u[1][1]));
+		return (u[0][0]+u[1][1]);
 	}
 
 	void print() {
@@ -156,6 +96,49 @@ public:
 	}
 };
 
+su2 operator+(su2 u1, su2 u2) {
+		su2 sum;
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				sum.u[i][j] = u1.u[i][j] + u2.u[i][j];
+			}
+		}
+		return (sum);
+	}
+
+su2 operator*(complex c, su2 u) {
+		su2 out;
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				out.u[i][j] = c*u.u[i][j];
+			}
+		}
+		return(out);
+	}
+
+su2 operator*(su2 u1, su2 u2) {
+		su2 out;
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				complex sum;
+				for (int k = 0; k < 2; k++) {
+					sum = sum + u1.u[i][k]*u2.u[k][j];
+				}
+				out.u[i][j] = sum;
+			}
+		}
+		return(out);
+	}
+
+su2 operator*(float f, su2 u1) {
+		su2 out;
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				out.u[i][j] = f*u1.u[i][j];
+			}
+		}
+		return(out);
+	}
 
 complex c_zero((float)0.0, (float)0.0);
 complex c_one((float)1.0, (float)0.0);
@@ -180,7 +163,7 @@ std::random_device dev;
 std::mt19937 rng(dev());
 std::uniform_int_distribution<std::mt19937::result_type> distnS(0, nS-1);
 std::uniform_int_distribution<std::mt19937::result_type> distnT(0, nT - 1);
-std::uniform_int_distribution<std::mt19937::result_type> distmu(0, 4);
+std::uniform_int_distribution<std::mt19937::result_type> distmu(0, 3);
 
 
 class lattice {
@@ -222,7 +205,9 @@ public:
 		}
 	}
 
-	float action(lattice l) {
+};
+
+float action(lattice l) {
 
 		float S = 0;
 		complex intermediate;
@@ -234,8 +219,8 @@ public:
 
 				su2 umunu;
 
-				umunu = l.lat[t][s][0].rightMul(l.lat[t + 1][s][2].rightMul(l.lat[t + 1][s + 1][1].rightMul(l.lat[t][s + 1][3])));
-				umunu = identity.add(umunu);
+				umunu = l.lat[t][s][0]*(l.lat[t + 1][s][2]*(l.lat[t + 1][s + 1][1]*l.lat[t][s + 1][3]));
+				umunu = identity + umunu;
 
 				intermediate = umunu.trace();
 
@@ -252,8 +237,13 @@ public:
 
 	}
 
-	void updateLattice()
+lattice updateLattice(lattice lat2)
 	{
+
+		
+		lattice origLat(lat2);
+
+		float initAction = action(lat2);
 
 		float r0 = (float)LO + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (HI - LO)));
 		float r1 = (float)LO + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (HI - LO)));
@@ -267,52 +257,100 @@ public:
 		float x2 = 0.5 * r2 / r;
 		float x3 = 0.5 * r3 / r;
 
-		su2 X = (identity.scalarMul(x0)).add((sigx.scalarMul(x1)).add((sigy.scalarMul(x2)).add((sigz.scalarMul(x3)))));
+		su2 X = (x0*identity)+(x1*sigx)+(x2*sigy)+(x3*sigz);
 
 		int temp = distnT(rng);
 		int spat = distnS(rng);
 		int direction = distmu(rng);
 
-		lattice lat2(*this);
+		// std::cout<< temp << " " << spat << " " << direction << std::endl;
+		// X.print();
 
-		lat2.lat[temp][spat][direction] = lat2.lat[temp][spat][direction].leftMul(X);
+		// lat2.lat[temp][spat][direction].print();
 
-		if (direction <= 1)
-		{
-			if (direction == 0)
-				temp == nT - 1 ? lat2.lat[0][spat][1] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian() : lat2.lat[temp + 1][spat][1] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian();
-			else
-				temp == 0 ? lat2.lat[nT - 1][spat][0] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian() : lat2.lat[temp - 1][spat][0] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian();
+		lat2.lat[temp][spat][direction] = X*lat2.lat[temp][spat][direction];
+
+		// lat2.lat[temp][spat][direction].print();
+
+		if (direction == 0){
+			if (temp == nT-1){
+				lat2.lat[0][spat][1] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+			else{
+				lat2.lat[temp+1][spat][1] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
 		}
-		else
-		{
-			if (direction == 2)
-				spat == nS - 1 ? lat2.lat[temp][0][3] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian() : lat2.lat[temp][spat + 1][3] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian();
-			else
-				temp == 0 ? lat2.lat[temp][nS - 1][2] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian() : lat2.lat[temp][spat - 1][2] = (lat2.lat[temp][spat][direction].leftMul(X)).hermitian();
+		else if (direction == 1){
+			if (temp == 0){
+				lat2.lat[nT-1][spat][0] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+			else{
+				lat2.lat[temp-1][spat][0] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+		} else if (direction == 2){
+			if (spat == nS-1){
+				lat2.lat[temp][0][3] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+			else{
+				lat2.lat[temp][spat+1][3] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+		}
+		else if (direction == 3){
+			if (spat == 0){
+				lat2.lat[temp][nS-1][2] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
+			else{
+				lat2.lat[temp][spat-1][2] = (X*lat2.lat[temp][spat][direction]).hermitian();
+			}
 		}
 
-		if (std::rand() <= exp(action(lat2) - action(*this)))
+		float finAction = action(lat2);
+
+		float rndm = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float expDeltaS = exp(-(finAction - initAction));
+		// std::cout<<"Random: "<<rndm<<" Final: "<<finAction<<" Initial: "<<initAction<<" Exp: "<<expDeltaS<<std::endl;
+
+		if ( rndm <= expDeltaS)
 		{
-			*this = lat2;
+			// std::cout<<"Change"<<std::endl;
+			return lat2;
+		}
+		else {
+			// std::cout<<"No Change"<<std::endl;
+			return origLat;
 		}
 	}
-	
-};
-
 
 int main()
 {
 	// complex c1(10, 20);
+	// complex c2(c1);
+	// c2 = complex(1,2);
+	// c2.print();
 	// c1.print();
 	lattice lat;
 	int i = 0;
-	while (i < 100) {
-		std::cout<<i<<std::endl;
-		lat.update_lattice();
+	while (i < 5000) {
+		lat = updateLattice(lat);
+		// std::cout <<i <<" "<< action(lat)<<std::endl;
 		i++;
 	}
-	std::cout << lat.action(lat);
+		std::cout <<i <<" "<< action(lat)<<std::endl;
+
+	// complex c1_[2][2] = {{c_one,2*c_one}, {3*c_one,4*c_one}};
+	// complex c2_[2][2] = {{4*c_one, 5*c_one}, {6*c_one, 10*c_one}};
+
+	// su2 c1(c1_), c2(c2_);
+
+	// (c1*c2).print();
+	
+	
+	// complex onetwo(1,2), twoone(2,1);
+	// complex test_[2][2] = {{c_zero, onetwo}, {twoone, c_zero}};
+	// su2 test(test_);
+	// test.print();
+	// test.hermitian();
+	// test.print();
 
 }
 
