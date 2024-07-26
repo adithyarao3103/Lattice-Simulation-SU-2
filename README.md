@@ -1,4 +1,4 @@
-# Lattice
+# Lattice Simulation of pure SU(2)
 
 - Code written by me to simulate SU(2) pure gauge theory in 1+1 dimensions.
 - This code is ugly and prone to memory leaks. It is only to display an understanding of the lattice simulations
