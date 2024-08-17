@@ -1,5 +1,5 @@
 // Code written by me to simulate SU(2) pure gauge theory in 1+1 dimensions. 
-// This code is ugly and prone to memory leaks. It is only to display an understanding of the lattice simulations
+// This code is inefficient and prone to memory leaks. It is only to display an understanding of the lattice simulations
 // I have not implemented any observables so far. 
 // The only part that has been implemented so far is the lattice action and the updating of the lattice according to the Markov Chain method.
 // Have not used any standard libs in C++ for complex numbers and matrices. Implemented the necessary functionalities from scratch
@@ -16,6 +16,8 @@
 #define N 2
 
 //  Defining the complex number class
+
+// Better implementation for all the classes would be to keep the class members private and only define the public functions. But it would take too much work to implement and I am short on time!
 
 class complex {
 public:
@@ -300,6 +302,5 @@ int main()
 	}
 	//  The above code simply thermalises the lattice and prints the action. Any observable to be implemented must be done as a function of the lattice and should be run in a loop here. 
 }
-
 
 
